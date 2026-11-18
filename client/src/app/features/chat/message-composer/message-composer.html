@@ -1,0 +1,53 @@
+<footer class="flex items-end gap-2 bg-wa-header px-4 py-[10px]">
+    <button
+        type="button"
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-wa-muted transition-colors hover:bg-white/10"
+        aria-label="Emoji"
+        title="Emoji"
+    >
+        <app-icon name="emoji" class="h-[25px] w-[25px]" [strokeWidth]="1.7" />
+    </button>
+
+    <button
+        type="button"
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-wa-muted transition-colors hover:bg-white/10"
+        aria-label="Attach"
+        title="Attach"
+    >
+        <app-icon name="attach" class="h-[23px] w-[23px]" [strokeWidth]="1.7" />
+    </button>
+
+    <div class="flex min-h-[42px] flex-1 items-center rounded-lg bg-wa-field px-4 py-[10px]">
+        <textarea
+            #draftInput
+            rows="1"
+            class="wa-scrollbar max-h-[120px] w-full resize-none bg-transparent text-[15px] leading-[22px] text-wa-text outline-none placeholder:text-wa-muted"
+            placeholder="Type a message"
+            aria-label="Type a message"
+            [value]="draftText()"
+            (input)="onDraftInput($event)"
+            (keydown)="onKeydown($event)"
+        ></textarea>
+    </div>
+
+    @if (hasDraft()) {
+        <button
+            type="button"
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-wa-muted transition-colors hover:bg-white/10"
+            aria-label="Send message"
+            title="Send"
+            (click)="sendDraft()"
+        >
+            <app-icon name="send" class="h-[23px] w-[23px]" [strokeWidth]="1.8" />
+        </button>
+    } @else {
+        <button
+            type="button"
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-wa-muted transition-colors hover:bg-white/10"
+            aria-label="Voice message"
+            title="Voice message"
+        >
+            <app-icon name="mic" class="h-[23px] w-[23px]" [strokeWidth]="1.7" />
+        </button>
+    }
+</footer>

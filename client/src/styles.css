@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme {
+    --font-sans: "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, sans-serif;
+
+    --color-wa-rail: #202c33;
+    --color-wa-panel: #111b21;
+    --color-wa-header: #202c33;
+    --color-wa-hover: #202c33;
+    --color-wa-active: #2a3942;
+    --color-wa-field: #2a3942;
+    --color-wa-outgoing: #005c4b;
+    --color-wa-incoming: #202c33;
+    --color-wa-wallpaper: #0b141a;
+    --color-wa-text: #e9edef;
+    --color-wa-muted: #8696a0;
+    --color-wa-meta: #a4b2bb;
+    --color-wa-divider: #222d34;
+    --color-wa-accent: #00a884;
+    --color-wa-tick: #53bdeb;
+    --color-wa-system: #182229;
+}
+
+@layer base {
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+    }
+
+    body {
+        background-color: var(--color-wa-panel);
+        color: var(--color-wa-text);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+    }
+}
+
+@layer utilities {
+    .wa-wallpaper {
+        background-color: var(--color-wa-wallpaper);
+        background-image: url("/wallpaper.svg");
+        background-repeat: repeat;
+        background-size: 412px 412px;
+    }
+
+    .wa-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: #374248 transparent;
+    }
+
+    .wa-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .wa-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .wa-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #374248;
+        border-radius: 3px;
+    }
+
+    .wa-bubble-in {
+        animation: wa-bubble-in 160ms ease-out;
+    }
+
+    .wa-typing-dot {
+        animation: wa-typing 1.2s ease-in-out infinite;
+    }
+}
+
+@keyframes wa-bubble-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes wa-typing {
+    0%,
+    60%,
+    100% {
+        opacity: 0.35;
+        transform: translateY(0);
+    }
+
+    30% {
+        opacity: 1;
+        transform: translateY(-3px);
+    }
+}

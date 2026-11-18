@@ -1,0 +1,50 @@
+<nav class="flex h-full w-[62px] flex-col items-center justify-between bg-wa-rail py-3" aria-label="Main navigation">
+    <ul class="flex flex-col items-center gap-1">
+        @for (item of primaryItems; track item.icon) {
+            <li>
+                <button
+                    type="button"
+                    class="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                    [class.bg-wa-active]="item.isActive"
+                    [class.text-wa-text]="item.isActive"
+                    [class.text-wa-muted]="!item.isActive"
+                    [attr.aria-label]="item.label"
+                    [attr.aria-current]="item.isActive ? 'page' : null"
+                    [title]="item.label"
+                >
+                    <app-icon [name]="item.icon" class="h-[22px] w-[22px]" />
+                </button>
+            </li>
+        }
+    </ul>
+
+    <ul class="flex flex-col items-center gap-1">
+        @for (item of secondaryItems; track item.icon) {
+            <li>
+                <button
+                    type="button"
+                    class="flex h-10 w-10 items-center justify-center rounded-full text-wa-muted transition-colors hover:bg-white/10"
+                    [attr.aria-label]="item.label"
+                    [title]="item.label"
+                >
+                    <app-icon [name]="item.icon" class="h-[22px] w-[22px]" />
+                </button>
+            </li>
+        }
+        <li class="mt-1">
+            <button
+                type="button"
+                class="flex h-10 w-10 items-center justify-center rounded-full transition-opacity hover:opacity-80"
+                [attr.aria-label]="'Signed in as ' + activeContact().name"
+                [title]="'Signed in as ' + activeContact().name"
+            >
+                <app-avatar
+                    class="h-[30px] w-[30px] text-[13px]"
+                    [initials]="activeContact().initials"
+                    [colorFrom]="activeContact().avatarFrom"
+                    [colorTo]="activeContact().avatarTo"
+                />
+            </button>
+        </li>
+    </ul>
+</nav>

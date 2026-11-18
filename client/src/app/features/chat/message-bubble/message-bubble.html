@@ -1,0 +1,53 @@
+<div class="flex w-full px-[3%]" [class.justify-end]="isOutgoing()">
+    <div
+        class="wa-bubble-in relative max-w-[min(68%,600px)] rounded-lg px-[9px] pt-[6px] pb-[8px] text-[14.2px] leading-[19px] text-wa-text shadow-[0_1px_0.5px_rgba(11,20,26,0.13)]"
+        [class.bg-wa-outgoing]="isOutgoing()"
+        [class.bg-wa-incoming]="!isOutgoing()"
+        [class.rounded-tr-none]="isOutgoing() && showTail()"
+        [class.rounded-tl-none]="!isOutgoing() && showTail()"
+    >
+        @if (showTail()) {
+            @if (isOutgoing()) {
+                <svg
+                    viewBox="0 0 8 13"
+                    width="8"
+                    height="13"
+                    class="absolute top-0 -right-[7px] text-wa-outgoing"
+                    fill="currentColor"
+                    aria-hidden="true"
+                >
+                    <path d="M0 0h8L0 12Z" />
+                </svg>
+            } @else {
+                <svg
+                    viewBox="0 0 8 13"
+                    width="8"
+                    height="13"
+                    class="absolute top-0 -left-[7px] text-wa-incoming"
+                    fill="currentColor"
+                    aria-hidden="true"
+                >
+                    <path d="M8 0H0l8 12Z" />
+                </svg>
+            }
+        }
+
+        <span class="whitespace-pre-wrap break-words">{{ message().text }}</span>
+        <span class="inline-block" [style.width.px]="metaSpacerWidth()" aria-hidden="true"></span>
+
+        <span class="absolute right-[9px] bottom-[5px] flex items-center gap-[3px] text-[11px] leading-none text-wa-meta">
+            <span>{{ message().sentAt | clockTime }}</span>
+
+            @if (statusIcon(); as icon) {
+                <app-icon
+                    [name]="icon"
+                    class="h-[15px] w-[15px]"
+                    [class.text-wa-tick]="message().status === 'read'"
+                    [class.text-red-400]="message().status === 'failed'"
+                    [strokeWidth]="2.4"
+                    [attr.aria-label]="statusLabel()"
+                />
+            }
+        </span>
+    </div>
+</div>

@@ -1,0 +1,125 @@
+<section class="flex h-full w-full flex-col">
+    <header class="flex h-[60px] shrink-0 items-center justify-between bg-wa-header px-4">
+        <div class="flex min-w-0 items-center gap-3">
+            <app-avatar
+                class="h-10 w-10 text-[15px]"
+                [initials]="botInitials"
+                [colorFrom]="botAvatarFrom"
+                [colorTo]="botAvatarTo"
+            />
+            <div class="min-w-0">
+                <p class="truncate text-[16px] leading-[21px] text-wa-text">{{ botName }}</p>
+                <p
+                    class="truncate text-[13px] leading-[17px]"
+                    [class.text-wa-accent]="isBotTyping()"
+                    [class.text-wa-muted]="!isBotTyping()"
+                >
+                    @if (isBotTyping()) {
+                        {{ botTypingText }}
+                    } @else {
+                        chatting as {{ activeContact().name }} · {{ activeContact().phoneNumber }}
+                    }
+                </p>
+            </div>
+        </div>
+
+        <div class="flex shrink-0 items-center gap-1 text-wa-muted">
+            <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                aria-label="Video call"
+                title="Video call"
+            >
+                <app-icon name="video" class="h-[21px] w-[21px]" />
+            </button>
+            <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                aria-label="Voice call"
+                title="Voice call"
+            >
+                <app-icon name="phone" class="h-[20px] w-[20px]" />
+            </button>
+            <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                aria-label="Search in chat"
+                title="Search"
+            >
+                <app-icon name="search" class="h-[20px] w-[20px]" />
+            </button>
+            <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                aria-label="Menu"
+                title="Menu"
+            >
+                <app-icon name="menu" class="h-[21px] w-[21px]" />
+            </button>
+        </div>
+    </header>
+
+    <div class="wa-wallpaper min-h-0 flex-1">
+        <div #scrollContainer class="wa-scrollbar h-full overflow-y-auto" role="log" aria-live="polite">
+            <div class="flex min-h-full flex-col justify-end py-5">
+                <div class="mb-1 flex justify-center px-[3%]">
+                    <p
+                        class="flex max-w-[85%] items-center justify-center gap-1.5 rounded-lg bg-wa-system px-3 py-[6px] text-center text-[12.5px] leading-[18px] text-[#ffd279]"
+                    >
+                        <app-icon name="lock" class="h-[13px] w-[13px] shrink-0" [strokeWidth]="2.4" />
+                        <span>{{ encryptionNotice }}</span>
+                    </p>
+                </div>
+
+                @for (group of messageGroups(); track group.dayLabel) {
+                    <div class="my-3 flex justify-center">
+                        <span
+                            class="rounded-lg bg-wa-system px-3 py-[5px] text-[12.5px] font-medium tracking-wide text-wa-muted uppercase shadow-sm"
+                        >
+                            {{ group.dayLabel }}
+                        </span>
+                    </div>
+
+                    @for (view of group.views; track view.message.id) {
+                        <app-message-bubble
+                            [message]="view.message"
+                            [showTail]="view.showTail"
+                            [style.margin-top.px]="view.topSpacingPx"
+                        />
+                    }
+                }
+
+                @if (isBotTyping()) {
+                    <div class="mt-[10px] flex px-[3%]">
+                        <div
+                            class="flex items-center gap-[4px] rounded-lg rounded-tl-none bg-wa-incoming px-[14px] py-[13px] shadow-[0_1px_0.5px_rgba(11,20,26,0.13)]"
+                        >
+                            <span class="wa-typing-dot h-[7px] w-[7px] rounded-full bg-wa-muted"></span>
+                            <span
+                                class="wa-typing-dot h-[7px] w-[7px] rounded-full bg-wa-muted"
+                                style="animation-delay: 0.15s"
+                            ></span>
+                            <span
+                                class="wa-typing-dot h-[7px] w-[7px] rounded-full bg-wa-muted"
+                                style="animation-delay: 0.3s"
+                            ></span>
+                        </div>
+                    </div>
+                }
+
+                @if (hasSendFailure()) {
+                    <div class="mt-3 flex justify-center px-[3%]">
+                        <p
+                            class="flex items-center gap-2 rounded-lg bg-[#3b2026] px-3 py-[7px] text-[12.5px] leading-[18px] text-red-300"
+                        >
+                            <app-icon name="alert" class="h-4 w-4 shrink-0" />
+                            <span>{{ sendFailedText }}</span>
+                        </p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <app-message-composer />
+</section>

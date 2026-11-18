@@ -1,0 +1,92 @@
+<section class="flex h-full w-full flex-col border-r border-wa-divider bg-wa-panel">
+    <header class="flex h-[60px] shrink-0 items-center justify-between px-4">
+        <h1 class="text-[21px] font-semibold text-wa-text">Chats</h1>
+        <div class="flex items-center gap-1 text-wa-muted">
+            <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                aria-label="New chat"
+                title="New chat"
+            >
+                <app-icon name="new-chat" class="h-[21px] w-[21px]" />
+            </button>
+            <button
+                type="button"
+                class="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                aria-label="Menu"
+                title="Menu"
+            >
+                <app-icon name="menu" class="h-[21px] w-[21px]" />
+            </button>
+        </div>
+    </header>
+
+    <div class="shrink-0 px-3 pb-2">
+        <div class="flex h-[35px] items-center gap-4 rounded-lg bg-wa-field px-3">
+            <app-icon name="search" class="h-4 w-4 text-wa-muted" />
+            <input
+                type="search"
+                class="w-full bg-transparent text-[14px] text-wa-text outline-none placeholder:text-wa-muted [&::-webkit-search-cancel-button]:appearance-none"
+                placeholder="Search"
+                aria-label="Search chats"
+                [value]="searchTerm()"
+                (input)="onSearchInput($event)"
+            />
+        </div>
+    </div>
+
+    <div class="wa-scrollbar flex-1 overflow-y-auto">
+        @for (preview of chatPreviews(); track preview.contact.id) {
+            @let isActive = preview.contact.id === activeChatId();
+
+            <button
+                type="button"
+                class="flex w-full items-center gap-3 pl-3 text-left transition-colors"
+                [class.bg-wa-active]="isActive"
+                [class.hover:bg-wa-hover]="!isActive"
+                [attr.aria-current]="isActive ? 'true' : null"
+                (click)="selectChat(preview.contact.id)"
+            >
+                <app-avatar
+                    class="h-[49px] w-[49px] text-[19px]"
+                    [initials]="preview.contact.initials"
+                    [colorFrom]="preview.contact.avatarFrom"
+                    [colorTo]="preview.contact.avatarTo"
+                />
+
+                <span
+                    class="flex min-w-0 flex-1 flex-col justify-center gap-[2px] border-b py-[14px] pr-3"
+                    [class.border-transparent]="isActive"
+                    [class.border-wa-divider]="!isActive"
+                >
+                    <span class="flex items-baseline justify-between gap-2">
+                        <span class="truncate text-[17px] text-wa-text">{{ preview.contact.name }}</span>
+                        <span class="shrink-0 text-[12px] text-wa-muted">
+                            {{ (preview.lastMessage?.sentAt ?? null) | chatListTime }}
+                        </span>
+                    </span>
+
+                    <span class="flex items-center gap-[3px] text-[14px] text-wa-muted">
+                        @if (preview.lastMessage; as lastMessage) {
+                            @if (lastMessage.author === "user") {
+                                <app-icon
+                                    class="h-[16px] w-[16px] shrink-0"
+                                    [name]="resolveStatusIcon(lastMessage.status)"
+                                    [class.text-wa-tick]="lastMessage.status === 'read'"
+                                    [class.text-red-400]="lastMessage.status === 'failed'"
+                                    [strokeWidth]="2.4"
+                                    [attr.aria-label]="resolveStatusLabel(lastMessage.status)"
+                                />
+                            }
+                            <span class="truncate">{{ lastMessage.text }}</span>
+                        } @else {
+                            <span class="truncate italic">No messages yet</span>
+                        }
+                    </span>
+                </span>
+            </button>
+        } @empty {
+            <p class="px-4 py-8 text-center text-[14px] text-wa-muted">No chats match your search.</p>
+        }
+    </div>
+</section>
