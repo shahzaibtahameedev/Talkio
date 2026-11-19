@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { MAX_MESSAGE_LENGTH, SUPPORTED_CHAT_IDS } from "../constants/chat.constants.js";
+import { MAX_CONVERSATION_ID_LENGTH, MAX_MESSAGE_LENGTH, SUPPORTED_CHAT_IDS } from "../constants/chat.constants.js";
 import { HTTP_STATUS } from "../constants/server.constants.js";
 import { createBotReply } from "../services/bot-reply.service.js";
 import type { SendMessageRequest } from "../types/chat.types.js";
@@ -24,11 +24,21 @@ messageRoute.post("/", async (context) => {
 
     const requestBody = parsedBody as Partial<SendMessageRequest>;
     const chatId = requestBody.chatId;
+    const conversationId = requestBody.conversationId;
     const text = requestBody.text;
     const isKnownChat = typeof chatId === "string" && SUPPORTED_CHAT_IDS.includes(chatId);
 
     if (!isKnownChat) {
         return context.json({ error: "A known chatId is required" }, HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const isValidConversationId =
+        typeof conversationId === "string" &&
+        conversationId.length > 0 &&
+        conversationId.length <= MAX_CONVERSATION_ID_LENGTH;
+
+    if (!isValidConversationId) {
+        return context.json({ error: "A conversationId is required" }, HTTP_STATUS.BAD_REQUEST);
     }
 
     if (typeof text !== "string") {
@@ -47,7 +57,7 @@ messageRoute.post("/", async (context) => {
         return context.json({ error: "Message text is too long" }, HTTP_STATUS.BAD_REQUEST);
     }
 
-    const reply = await createBotReply(chatId);
+    const reply = await createBotReply({ chatId, conversationId, text: trimmedText });
 
     return context.json({ reply });
 });

@@ -44,6 +44,9 @@ export class ChatStore {
     private readonly typingChatIdState = signal<ChatId | null>(null);
     private readonly searchTermState = signal("");
 
+    // One agent conversation per chat, kept for this page session only (like the messages).
+    private readonly conversationIds = new Map<ChatId, string>();
+
     readonly activeChatId = this.activeChatIdState.asReadonly();
     readonly searchTerm = this.searchTermState.asReadonly();
 
@@ -130,7 +133,8 @@ export class ChatStore {
         this.typingChatIdState.set(chatId);
 
         try {
-            const response = await this.chatApiService.sendMessage(chatId, trimmedText);
+            const conversationId = this.getConversationId(chatId);
+            const response = await this.chatApiService.sendMessage(chatId, conversationId, trimmedText);
             const botMessage: ChatMessage = {
                 id: response.reply.id,
                 chatId,
@@ -147,6 +151,20 @@ export class ChatStore {
         } finally {
             this.stopTyping(chatId);
         }
+    }
+
+    private getConversationId(chatId: ChatId): string {
+        const existingId = this.conversationIds.get(chatId);
+
+        if (existingId) {
+            return existingId;
+        }
+
+        const newId = crypto.randomUUID();
+
+        this.conversationIds.set(chatId, newId);
+
+        return newId;
     }
 
     private stopTyping(chatId: ChatId): void {

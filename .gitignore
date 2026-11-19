@@ -1,6 +1,7 @@
 node_modules
 dist
 .angular
+.env
 server/log.txt
 .claude
 CLAUDE.md

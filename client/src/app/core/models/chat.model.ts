@@ -29,6 +29,7 @@ export interface ChatPreview {
 
 export interface SendMessageRequest {
     chatId: ChatId;
+    conversationId: string;
     text: string;
 }
 

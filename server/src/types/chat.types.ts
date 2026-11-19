@@ -10,6 +10,7 @@ export interface ChatMessage {
 
 export interface SendMessageRequest {
     chatId: string;
+    conversationId: string;
     text: string;
 }
 

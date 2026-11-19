@@ -9,8 +9,8 @@ import type { ChatId, SendMessageRequest, SendMessageResponse } from "../models/
 export class ChatApiService {
     private readonly httpClient = inject(HttpClient);
 
-    async sendMessage(chatId: ChatId, text: string): Promise<SendMessageResponse> {
-        const requestBody: SendMessageRequest = { chatId, text };
+    async sendMessage(chatId: ChatId, conversationId: string, text: string): Promise<SendMessageResponse> {
+        const requestBody: SendMessageRequest = { chatId, conversationId, text };
         const request = this.httpClient.post<SendMessageResponse>(SEND_MESSAGE_ENDPOINT, requestBody);
         const response = await firstValueFrom(request);
 
