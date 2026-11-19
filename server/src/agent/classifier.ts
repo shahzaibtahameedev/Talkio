@@ -7,11 +7,11 @@ import { type AgentStateType, type AgentStateUpdate, INTENTS, type Intent } from
 // How much recent conversation the classifier sees, so short follow-ups keep their topic.
 const CLASSIFIER_HISTORY_SIZE = 6;
 
-const CLASSIFIER_PROMPT = `You classify the customer's LATEST message in the customer-service chat of Talkio Salon.
+const CLASSIFIER_PROMPT = `You classify the customer's LATEST message in the customer-service chat of an aesthetic and dermatology clinic.
 Choose exactly one intent:
-- query: questions about the salon, such as services, prices, opening hours, location, payment or policies.
-- booking: booking, checking, changing or cancelling an appointment, including follow-ups that only give booking details such as a date, a time or a name.
-- complaint: the customer is unhappy, reports a problem, or is adding details to a complaint.
+- query: questions about the clinic, such as treatments, prices, downtime, opening hours, location, payment or policies.
+- booking: booking, checking, changing or cancelling an appointment or consultation, including follow-ups that only give booking details such as a date, a time or a name.
+- complaint: the customer is unhappy, reports a problem or a reaction after a treatment, or is adding details to a complaint.
 - other: greetings, thanks, small talk, or anything unclear.
 Earlier messages are context only. A short follow-up like "tomorrow at 5pm" or just a name continues the topic being discussed. If the customer clearly changes topic, classify the new topic.`;
 

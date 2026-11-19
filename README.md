@@ -79,16 +79,44 @@ START -> classifier -> (router) -> query | booking | complaint | other -> END
   `query`, `booking`, `complaint` or `other`. It sees the last 6 messages, so follow-ups
   like "tomorrow at 5pm" stay on the current topic.
 - **router** is a plain function on the conditional edge: the intent is the next node's name.
-- **specialists** are small `createAgent` tool-calling agents, each with its own prompt and tools:
-  - query: answers FAQs from the business info in its prompt (`BUSINESS_INFO` in `specialists.ts`)
-  - booking: `checkSlots`, `bookSlot`, `cancelBooking` over an in-memory store
-  - complaint: gathers details, calls `logComplaint`, then sets `escalated = true`
-  - other: greetings and unclear messages; asks a short clarifying question
+- **specialists** are small `createAgent` tool-calling agents for an aesthetic/dermatology clinic,
+  each with its own instructions, its own clinic data file and only its own tools:
+  - query: answers FAQs (treatments, prices, hours, policies) from `query.md`
+  - booking: `checkSlots`, `bookSlot`, `cancelBooking` over an in-memory store, following `booking.md`
+  - complaint: gives urgent-care instructions when needed, gathers details, calls `logComplaint`,
+    then sets `escalated = true`, following `complaint.md`
+  - other: greetings and unclear messages; asks a short clarifying question, using `fallback.md`
 - **memory** is LangGraph's `MemorySaver`, keyed by `thread_id`. Conversations, bookings and
   complaints all live in memory and are lost when the server restarts.
 
 Only each specialist's final answer is added to the shared transcript; tool calls stay inside
 that specialist's run. The server logs each turn's intent and `escalated` flag.
+
+### Clinic data
+
+All clinic facts live in `server/clinic-data/`, one Markdown file per agent. The code only holds
+behaviour instructions. Each agent re-reads its file on every model call, so edits apply to the
+next message without a restart.
+
+| File | Used by | Holds |
+| --- | --- | --- |
+| `query.md` | query agent | clinic details, treatments and prices, payment, common questions |
+| `booking.md` | booking agent | what to collect, consultation and patch-test rules, preparation, cancellation policy |
+| `complaint.md` | complaint agent | urgent symptoms and the urgent line, details to collect, follow-up promise |
+| `fallback.md` | fallback agent | clinic name and what the assistant can help with |
+
+The bookable time slots and the closed day (Sunday) are enforced by the booking tools in
+`server/src/agent/tools.ts`, so keep the opening hours in `query.md` and `booking.md` in line with them.
+
+### Where conversations are stored
+
+Nothing is written to disk or a database:
+
+- **Agent memory** is LangGraph's `MemorySaver` in `server/src/agent/graph.ts`, held in the Node
+  process and keyed by `thread_id` (the UI's per-chat `conversationId`). It is cleared when the server restarts.
+- **Bookings and complaints** are a `Map` and an array in `server/src/agent/tools.ts`, also in process memory.
+- **The chat bubbles you see** are kept in the browser by `ChatStore` (Angular signals) and are
+  cleared on page reload. A reload also creates new conversation IDs, so the agent starts fresh.
 
 ## Project layout
 
@@ -110,13 +138,15 @@ client/src/app/
     pipes/          clock-time, chat-list-time
     utils/          date formatting
 
+server/clinic-data/   one .md file of clinic facts per agent (edit these, not the code)
+
 server/src/
   agent/
     state.ts        graph state: messages, intent, escalated
     llm.ts          OpenRouter chat model from env
     classifier.ts   classifier node + router
-    specialists.ts  the four agents and their prompts
-    tools.ts        booking + complaint tools with in-memory stores
+    specialists.ts  the four agents: behaviour instructions + loading their clinic data file
+    tools.ts        booking + complaint tools, time slots, in-memory stores
     graph.ts        builds and compiles the graph once
   constants/        fallback reply, limits, port, allowed origins
   routes/           message.route.ts

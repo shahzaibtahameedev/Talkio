@@ -15,6 +15,7 @@ const FIRST_REFERENCE_NUMBER = 1001;
 interface Booking {
     id: string;
     name: string;
+    treatment: string;
     date: string;
     time: string;
 }
@@ -56,7 +57,7 @@ function findDateProblem(date: string): string | null {
     const isSunday = parsedDate.getDay() === SUNDAY;
 
     if (isSunday) {
-        return "The salon is closed on Sundays.";
+        return "The clinic is closed on Sundays.";
     }
 
     return null;
@@ -119,8 +120,9 @@ export const checkSlots = tool(
 );
 
 export const bookSlot = tool(
-    async ({ name, date, time }) => {
+    async ({ name, treatment, date, time }) => {
         const customerName = name.trim();
+        const treatmentName = treatment?.trim() ?? "";
 
         if (customerName.length === 0) {
             return "A customer name is required to book.";
@@ -147,6 +149,7 @@ export const bookSlot = tool(
         const booking: Booking = {
             id: `B-${nextBookingNumber}`,
             name: customerName,
+            treatment: treatmentName.length > 0 ? treatmentName : "treatment not specified",
             date,
             time,
         };
@@ -154,13 +157,14 @@ export const bookSlot = tool(
         nextBookingNumber += 1;
         bookings.set(booking.id, booking);
 
-        return `Booked. Booking ID ${booking.id} for ${booking.name} on ${booking.date} at ${booking.time}.`;
+        return `Booked. Booking ID ${booking.id} for ${booking.name} (${booking.treatment}) on ${booking.date} at ${booking.time}.`;
     },
     {
         name: "bookSlot",
-        description: "Book an appointment once the customer's name, date and time are known.",
+        description: "Book an appointment once the patient's name, treatment, date and time are known.",
         schema: z.object({
-            name: z.string().describe("The customer's name."),
+            name: z.string().describe("The patient's name."),
+            treatment: z.string().optional().describe("The treatment or consultation, e.g. HydraFacial."),
             date: z.string().describe("The date in YYYY-MM-DD format."),
             time: z.string().describe("The start time in 24-hour HH:MM format, e.g. 17:00."),
         }),

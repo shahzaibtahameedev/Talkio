@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+
 import { AIMessage, type BaseMessage } from "@langchain/core/messages";
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import { createAgent, dynamicSystemPromptMiddleware } from "langchain";
@@ -7,51 +9,59 @@ import { chatModel } from "./llm.js";
 import type { AgentStateType, AgentStateUpdate } from "./state.js";
 import { bookSlot, cancelBooking, checkSlots, logComplaint } from "./tools.js";
 
-// Sample business details for the FAQ agent. Replace with the real business info.
-const BUSINESS_INFO = `Talkio Salon, a hair and beauty salon.
-- Address: 12 Main Boulevard, Gulberg, Lahore.
-- Opening hours: Monday to Saturday, 10:00 to 20:00. Closed on Sundays.
-- Services and prices: haircut PKR 1,500 (45 min); hair colour PKR 4,500 (2 hours); beard trim PKR 800 (20 min); facial PKR 3,000 (1 hour); manicure PKR 1,800 (45 min).
-- Payment: cash, debit or credit card, JazzCash and Easypaisa.
-- Appointments can be booked in this chat. Walk-ins are welcome when a slot is free.
-- Cancellation: free up to 2 hours before the appointment.
-- Parking: free parking in front of the salon.`;
+// Clinic facts live in server/clinic-data/*.md (one file per agent), so they can be edited without code changes.
+// This path works from both src/agent (tsx) and dist/agent (compiled build).
+const CLINIC_DATA_DIRECTORY = new URL("../../clinic-data/", import.meta.url);
 
 // Shared tone rules appended to every specialist prompt.
 const REPLY_STYLE = `Reply briefly (one to three short sentences) and politely.
 Always reply in the same language and script the customer writes in, for example English, Urdu, or Roman Urdu.
-Use plain text only, no markdown.`;
+Use plain text only, no markdown.
+Never diagnose or give medical advice; suggest a dermatologist consultation instead.`;
 
-const QUERY_PROMPT = `You answer customer questions for Talkio Salon using only the business information below.
+// The prompts below only describe behaviour. Every clinic fact comes from the agent's .md file.
+const QUERY_INSTRUCTIONS = `You answer customer questions for an aesthetic and dermatology clinic, using only the clinic information below.
 If the answer is not in it, say you don't have that information and offer to help with something else.
-If the customer wants to book, tell them you can book an appointment if they share a day and time.
+If the customer wants to book, tell them you can book an appointment if they share the treatment, a day and a time.`;
 
-Business information:
-${BUSINESS_INFO}`;
-
-const BOOKING_PROMPT = `You are the booking assistant for Talkio Salon. You help customers book, check or cancel appointments.
-- To book you need the customer's name, a date and a time. Ask only for what is missing, one short question at a time.
+const BOOKING_INSTRUCTIONS = `You are the booking assistant for an aesthetic and dermatology clinic. You help patients book, check or cancel appointments.
+- Follow the clinic's booking rules below.
+- Ask only for what is missing, one short question at a time.
 - Use checkSlots to see free times. Never invent availability.
 - Turn relative dates like "tomorrow" or "next Monday" into YYYY-MM-DD using today's date. Times are 24-hour HH:MM, so 5pm is 17:00.
-- Call bookSlot only when you have the name, the date and the time. After booking, confirm the details and give the booking ID.
+- Call bookSlot only when you have everything the rules require. After booking, confirm the details and give the booking ID.
 - To cancel, ask for the booking ID and call cancelBooking.
 - If a tool reports a problem, explain it simply and suggest another option.`;
 
-const COMPLAINT_PROMPT = `You handle complaints for Talkio Salon.
+const COMPLAINT_INSTRUCTIONS = `You handle complaints for an aesthetic and dermatology clinic, following the clinic's complaint policy below.
 - Start by acknowledging the problem with empathy.
-- Make sure you know what happened, roughly when, and what the customer would like (for example a redo, a refund or an apology). Ask only for what is missing.
-- When you have enough details, call logComplaint with a short summary. Then tell the customer a team member will contact them personally, and share the complaint reference.
-- Never promise refunds or compensation yourself.`;
+- If the patient describes any urgent symptom listed below, give the urgent instructions first, before anything else.
+- Ask only for the details that are still missing.
+- When you have enough details, call logComplaint with a short summary. Then tell the patient a person will contact them, as described below, and share the complaint reference.`;
 
-const FALLBACK_PROMPT = `You are the Talkio Salon chat assistant handling greetings and unclear messages.
-- If the customer greets you, greet them warmly.
+const FALLBACK_INSTRUCTIONS = `You are the chat assistant of an aesthetic and dermatology clinic, handling greetings and unclear messages.
+- If the customer greets you, greet them warmly using the clinic's name.
 - If the message is unclear, ask one short clarifying question.
-- Mention that you can answer questions about the salon, book appointments, or take a complaint.`;
+- Briefly mention what you can help with, based on the clinic information below.`;
 
-/** A small tool-calling agent with its own prompt and only its own tools. */
-function createSpecialist(prompt: string, tools: StructuredToolInterface[]) {
-    // The prompt is rebuilt on every model call so "today" stays correct after midnight.
-    const systemPrompt = dynamicSystemPromptMiddleware(() => `${prompt}\n\n${REPLY_STYLE}\n\n${describeToday()}`);
+async function readClinicData(fileName: string): Promise<string> {
+    const fileUrl = new URL(fileName, CLINIC_DATA_DIRECTORY);
+    const clinicData = await readFile(fileUrl, "utf8");
+
+    return clinicData;
+}
+
+/**
+ * A small tool-calling agent with its own instructions, its own clinic data file and only its own tools.
+ * The prompt is rebuilt on every model call, so edits to the .md file and "today" are always current.
+ */
+function createSpecialist(instructions: string, clinicDataFile: string, tools: StructuredToolInterface[]) {
+    const systemPrompt = dynamicSystemPromptMiddleware(async () => {
+        const clinicData = await readClinicData(clinicDataFile);
+        const prompt = `${instructions}\n\n${REPLY_STYLE}\n\n${describeToday()}\n\nClinic information:\n${clinicData}`;
+
+        return prompt;
+    });
     const agent = createAgent({
         model: chatModel,
         tools,
@@ -61,10 +71,10 @@ function createSpecialist(prompt: string, tools: StructuredToolInterface[]) {
     return agent;
 }
 
-const queryAgent = createSpecialist(QUERY_PROMPT, []);
-const bookingAgent = createSpecialist(BOOKING_PROMPT, [checkSlots, bookSlot, cancelBooking]);
-const complaintAgent = createSpecialist(COMPLAINT_PROMPT, [logComplaint]);
-const fallbackAgent = createSpecialist(FALLBACK_PROMPT, []);
+const queryAgent = createSpecialist(QUERY_INSTRUCTIONS, "query.md", []);
+const bookingAgent = createSpecialist(BOOKING_INSTRUCTIONS, "booking.md", [checkSlots, bookSlot, cancelBooking]);
+const complaintAgent = createSpecialist(COMPLAINT_INSTRUCTIONS, "complaint.md", [logComplaint]);
+const fallbackAgent = createSpecialist(FALLBACK_INSTRUCTIONS, "fallback.md", []);
 
 /**
  * Keeps only the agent's final text answer. Tool calls and tool results stay inside
